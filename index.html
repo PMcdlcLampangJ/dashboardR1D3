@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>แดชบอร์ดสรุปผลการประเมินรายวิชา วันที่สาม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background-color: #f0f4f8;
+      color: #1e293b;
+    }
+    .navy-gradient {
+      background: linear-gradient(135deg, #0f294a 0%, #1e40af 55%, #0284c7 100%);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 20px -2px rgba(15, 41, 74, 0.06);
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #ffffff; }
+      .glass-card { box-shadow: none; border: 1px solid #cbd5e1; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="navy-gradient text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="flex items-start sm:items-center gap-4">
+          <div class="p-3 bg-white/15 rounded-2xl backdrop-blur-sm border border-white/20 shrink-0">
+            <svg class="w-9 h-9 text-sky-200" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+          </div>
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-sky-400/20 border border-sky-300/30 text-sky-100 text-xs font-medium mb-1.5">
+              <span id="liveDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="syncStatus">กำลังเชื่อมต่อฐานข้อมูล Google Sheets...</span>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight">แดชบอร์ดสรุปผลการประเมินรายวิชา วันที่สาม</h1>
+            <p class="text-sky-100 text-xs sm:text-sm mt-0.5">หลักสูตรสร้างผู้นำการเปลี่ยนแปลงขับเคลื่อนตำบลเข้มแข็ง ตามหลักปรัชญาของเศรษฐกิจพอเพียง ปี 2570</p>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2 no-print">
+          <button onclick="fetchSheetData(true)" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white text-sm font-medium border border-white/25 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+            อัปเดตข้อมูล
+          </button>
+          <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-blue-900 hover:bg-sky-50 text-sm font-semibold shadow-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" /></svg>
+            พิมพ์รายงาน
+          </button>
+          <button onclick="downloadHTML()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 text-sm font-bold shadow-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+            ดาวน์โหลด HTML
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1">
+
+    <!-- Filter Bar -->
+    <section class="glass-card rounded-2xl p-4 no-print">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-blue-900 font-semibold text-sm">
+          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" /></svg>
+          ตัวกรองข้อมูลผู้ตอบแบบประเมิน:
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 flex-1 max-w-4xl">
+          <select id="filterGender" onchange="applyFilters()" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-blue-500 focus:bg-white outline-none">
+            <option value="ALL">เพศ: ทั้งหมด</option>
+          </select>
+          <select id="filterAge" onchange="applyFilters()" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-blue-500 focus:bg-white outline-none">
+            <option value="ALL">อายุ: ทั้งหมด</option>
+          </select>
+          <select id="filterEdu" onchange="applyFilters()" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-blue-500 focus:bg-white outline-none">
+            <option value="ALL">วุฒิการศึกษา: ทั้งหมด</option>
+          </select>
+          <select id="filterRole" onchange="applyFilters()" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-blue-500 focus:bg-white outline-none">
+            <option value="ALL">สถานะทางสังคม: ทั้งหมด</option>
+          </select>
+          <button onclick="resetFilters()" class="rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-800 px-3 py-2 text-sm font-medium transition">
+            ล้างตัวกรอง
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-blue-700">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-slate-500">จำนวนผู้ตอบแบบประเมิน</span>
+          <span class="p-2 rounded-xl bg-blue-50 text-blue-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+          </span>
+        </div>
+        <div class="mt-3 flex items-baseline gap-2">
+          <span id="kpiCount" class="text-3xl font-bold text-slate-800">0</span>
+          <span class="text-sm text-slate-500">คน</span>
+        </div>
+        <p id="kpiLastUpdate" class="text-xs text-slate-400 mt-1.5">อัปเดตล่าสุด: -</p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-sky-600">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-slate-500">คะแนนเฉลี่ยรวม (เต็ม 5.00)</span>
+          <span class="p-2 rounded-xl bg-sky-50 text-sky-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
+          </span>
+        </div>
+        <div class="mt-3 flex items-baseline gap-2">
+          <span id="kpiMean" class="text-3xl font-bold text-blue-900">0.00</span>
+          <span id="kpiSD" class="text-xs font-medium text-slate-500">(S.D. = 0.00)</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1.5">รายวิชาการนำเสนอ Prototype เชิงพื้นที่</p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-indigo-600">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-slate-500">ร้อยละความพึงพอใจ</span>
+          <span class="p-2 rounded-xl bg-indigo-50 text-indigo-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>
+          </span>
+        </div>
+        <div class="mt-3 flex items-baseline gap-2">
+          <span id="kpiPercent" class="text-3xl font-bold text-indigo-900">0.00%</span>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+          <div id="kpiProgressBar" class="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-600">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-slate-500">ระดับผลการประเมิน</span>
+          <span class="p-2 rounded-xl bg-emerald-50 text-emerald-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" /></svg>
+          </span>
+        </div>
+        <div class="mt-3">
+          <span id="kpiLevelBadge" class="inline-block px-3 py-1 rounded-xl text-lg font-bold bg-emerald-100 text-emerald-800">-</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1.5">เกณฑ์ 4.51–5.00 = มากที่สุด</p>
+      </div>
+    </section>
+
+    <!-- Part 1: Demographics -->
+    <section class="glass-card rounded-2xl p-6">
+      <div class="flex items-center gap-3 border-b border-slate-100 pb-4 mb-5">
+        <span class="w-8 h-8 rounded-xl bg-blue-900 text-white font-bold flex items-center justify-center text-sm">1</span>
+        <div>
+          <h2 class="text-lg font-bold text-blue-950">ส่วนที่ 1 ข้อมูลทั่วไปของผู้ตอบแบบประเมิน</h2>
+          <p class="text-xs text-slate-500">จำแนกตามเพศ ช่วงอายุ วุฒิการศึกษา และสถานะทางสังคม</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100">
+          <h3 class="text-sm font-bold text-slate-700 mb-3 text-center">1. เพศ</h3>
+          <div class="h-48"><canvas id="chartGender"></canvas></div>
+        </div>
+        <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100">
+          <h3 class="text-sm font-bold text-slate-700 mb-3 text-center">2. ช่วงอายุ</h3>
+          <div class="h-48"><canvas id="chartAge"></canvas></div>
+        </div>
+        <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100">
+          <h3 class="text-sm font-bold text-slate-700 mb-3 text-center">3. วุฒิการศึกษา</h3>
+          <div class="h-48"><canvas id="chartEdu"></canvas></div>
+        </div>
+        <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-100">
+          <h3 class="text-sm font-bold text-slate-700 mb-3 text-center">4. สถานะทางสังคม</h3>
+          <div class="h-48"><canvas id="chartRole"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Part 2: Course Evaluation -->
+    <section class="glass-card rounded-2xl p-6 space-y-6">
+      <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+        <span class="w-8 h-8 rounded-xl bg-blue-900 text-white font-bold flex items-center justify-center text-sm">2</span>
+        <div>
+          <h2 class="text-lg font-bold text-blue-950">ส่วนที่ 2 การประเมินรายวิชา : การนำเสนอ Prototype ในการพัฒนาชุมชนเชิงพื้นที่</h2>
+          <p class="text-xs text-slate-500">วิเคราะห์ค่าเฉลี่ยรายข้อ (เต็ม 5.00) สัดส่วนระดับคะแนน และตารางสถิติเชิงพรรณนา</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+          <h3 class="text-sm font-bold text-blue-900 mb-3">ค่าเฉลี่ยคะแนนรายประเด็น (เต็ม 5.00)</h3>
+          <div class="h-72"><canvas id="chartItemMean"></canvas></div>
+        </div>
+        <div class="bg-slate-50/70 rounded-xl p-4 border border-slate-100">
+          <h3 class="text-sm font-bold text-blue-900 mb-3">สัดส่วนระดับความพึงพอใจรายข้อ (%)</h3>
+          <div class="h-72"><canvas id="chartItemStack"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Descriptive Table -->
+      <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-blue-950 text-white text-xs">
+            <tr>
+              <th class="py-3 px-4 font-semibold min-w-[280px]">ประเด็นการประเมินรายวิชา</th>
+              <th class="py-3 px-2 text-center w-16">มากที่สุด<br>(5)</th>
+              <th class="py-3 px-2 text-center w-16">มาก<br>(4)</th>
+              <th class="py-3 px-2 text-center w-16">ปานกลาง<br>(3)</th>
+              <th class="py-3 px-2 text-center w-16">น้อย<br>(2)</th>
+              <th class="py-3 px-2 text-center w-16">น้อยที่สุด<br>(1)</th>
+              <th class="py-3 px-3 text-center w-20 bg-blue-900">เฉลี่ย<br>(Mean)</th>
+              <th class="py-3 px-3 text-center w-20 bg-blue-900">S.D.</th>
+              <th class="py-3 px-3 text-center w-20 bg-blue-900">ร้อยละ</th>
+              <th class="py-3 px-3 text-center w-28 bg-blue-900">แปลผล</th>
+            </tr>
+          </thead>
+          <tbody id="statsTableBody" class="divide-y divide-slate-200 bg-white"></tbody>
+          <tfoot id="statsTableFoot" class="bg-blue-50 font-bold text-blue-950 border-t-2 border-blue-900"></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- Part 3: Qualitative Comments -->
+    <section class="glass-card rounded-2xl p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-xl bg-blue-900 text-white font-bold flex items-center justify-center text-sm">3</span>
+          <div>
+            <h2 class="text-lg font-bold text-blue-950">ส่วนที่ 3 ความคิดเห็นและข้อเสนอแนะเพิ่มเติม <span id="commentCountBadge" class="ml-1.5 px-2.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">0 รายการ</span></h2>
+            <p class="text-xs text-slate-500">ข้อเสนอแนะและแนวทางการนำ Prototype ไปประยุกต์ใช้จากผู้เข้าร่วมอบรม (ดึงตรงจากฐานข้อมูลคอลัมน์ P)</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 no-print">
+          <input type="text" id="commentSearch" onkeyup="renderComments()" placeholder="ค้นหาคำในข้อเสนอแนะ..." class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm focus:border-blue-500 focus:bg-white outline-none w-48 sm:w-56" />
+          <button onclick="copyAllComments()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-sm font-medium transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>
+            คัดลอกข้อเสนอแนะ
+          </button>
+        </div>
+      </div>
+
+      <div id="commentsContainer" class="space-y-3"></div>
+    </section>
+
+  </main>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center mt-8">
+    แดชบอร์ดสรุปผลการประเมินรายวิชา วันที่สาม | หลักสูตรสร้างผู้นำการเปลี่ยนแปลงขับเคลื่อนตำบลเข้มแข็ง ตามหลักปรัชญาของเศรษฐกิจพอเพียง ปี 2570
+  </footer>
+
+  <script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQFYf2pBEwC8G7ZuRldgS_kXPegxb_hIWO6ytIp4DVmdJ2j0VjsnXEKRuuDSy9UEdjPLFcMfKnfkdhw/pub?gid=1761538317&single=true&output=csv";
+
+    const QUESTIONS = [
+      "1. การแบ่งกลุ่มฝึกปฏิบัติและนำเสนอผลงาน (5 ชั่วโมง) มีความเหมาะสมและเพียงพอ",
+      "2. เปิดโอกาสให้มีการแลกเปลี่ยนความคิดเห็น และรับข้อเสนอแนะเพื่อประเมินความเป็นไปได้ในการใช้งานจริง",
+      "3. วิทยากรให้ข้อเสนอแนะที่เป็นประโยชน์ต่อการนำไปปรับปรุงและขยายผลสู่การพัฒนาชุมชน",
+      "4. ผู้เข้าอบรมสามารถออกแบบ Prototype ที่ตอบโจทย์ปัญหาชุมชน และนำเสนอได้อย่างเป็นระบบ",
+      "5. ผู้เข้าอบรมได้รับความรู้ ความเข้าใจ และสามารถบรรลุผลลัพธ์การเรียนรู้ตามที่รายวิชากำหนด",
+      "6. ผู้เข้าอบรมสามารถนำแนวคิดไปประยุกต์ใช้ในการทำงานจริงในพื้นที่ได้"
+    ];
+
+    let rawRecords = [];
+    let filteredRecords = [];
+    let charts = {};
+
+    function interpretLevel(mean) {
+      if (mean >= 4.51) return { label: "มากที่สุด", badge: "bg-emerald-100 text-emerald-800" };
+      if (mean >= 3.51) return { label: "มาก", badge: "bg-blue-100 text-blue-800" };
+      if (mean >= 2.51) return { label: "ปานกลาง", badge: "bg-amber-100 text-amber-800" };
+      if (mean >= 1.51) return { label: "น้อย", badge: "bg-orange-100 text-orange-800" };
+      return { label: "น้อยที่สุด", badge: "bg-rose-100 text-rose-800" };
+    }
+
+    // ค้นหาคอลัมน์อย่างแม่นยำ (รองรับทั้งชื่อหัวตารางและตำแหน่งคอลัมน์ A-P)
+    function parseRowObject(row, headers) {
+      const getByKeyword = (keywords, fallbackIndex) => {
+        for (const h of headers) {
+          const cleanH = h.replace(/\s+/g, ' ').trim();
+          if (keywords.every(kw => cleanH.includes(kw))) {
+            return (row[h] ?? "").toString().trim();
+          }
+        }
+        if (fallbackIndex !== undefined && headers[fallbackIndex]) {
+          return (row[headers[fallbackIndex]] ?? "").toString().trim();
+        }
+        return "";
+      };
+
+      // โครงสร้างคอลัมน์ตามชีตจริง:
+      // A(0): ประทับเวลา | B(1): เพศ | C(2): อายุ | D(3): วุฒิ | E(4): สถานะ | F(5): ระบุอื่นๆ
+      // G(6)-L(11): ข้อ 1 - ข้อ 6 | M(12): เฉลี่ย | N(13): ร้อยละ | O(14): ระดับ | P(15): ส่วนที่ 3 ความคิดเห็นฯ
+      const timestamp = getByKeyword(["เวลา"], 0);
+      const gender = getByKeyword(["เพศ"], 1) || "ไม่ระบุ";
+      const age = getByKeyword(["อายุ"], 2) || "ไม่ระบุ";
+      const edu = getByKeyword(["วุฒิ"], 3) || "ไม่ระบุ";
+      const role = getByKeyword(["สถานะ"], 4) || "ไม่ระบุ";
+
+      const scores = [
+        parseFloat(getByKeyword(["ข้อ 1"], 6)) || 0,
+        parseFloat(getByKeyword(["ข้อ 2"], 7)) || 0,
+        parseFloat(getByKeyword(["ข้อ 3"], 8)) || 0,
+        parseFloat(getByKeyword(["ข้อ 4"], 9)) || 0,
+        parseFloat(getByKeyword(["ข้อ 5"], 10)) || 0,
+        parseFloat(getByKeyword(["ข้อ 6"], 11)) || 0
+      ];
+
+      // ดึงความคิดเห็นจากคอลัมน์ที่มีคำว่า "ความคิดเห็น" หรือ "ข้อเสนอแนะ" หรือคอลัมน์สุดท้าย (Index 15 / คอลัมน์ P)
+      let comment = "";
+      const commentHeader = headers.find(h => h.includes("ความคิดเห็น") || h.includes("ข้อเสนอแนะ"));
+      if (commentHeader) {
+        comment = (row[commentHeader] ?? "").toString().trim();
+      } else if (headers.length >= 16) {
+        comment = (row[headers[15]] ?? "").toString().trim();
+      } else {
+        comment = (row[headers[headers.length - 1]] ?? "").toString().trim();
+      }
+
+      const validScores = scores.filter(s => s >= 1 && s <= 5);
+      const avg = validScores.length ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 0;
+
+      return { timestamp, gender, age, edu, role, scores, avg, comment };
+    }
+
+    function fetchSheetData(isManual = false) {
+      const statusEl = document.getElementById("syncStatus");
+      statusEl.textContent = isManual ? "กำลังอัปเดตข้อมูลล่าสุด..." : "กำลังซิงค์ข้อมูลจาก Google Sheets...";
+
+      Papa.parse(CSV_URL + "&_t=" + Date.now(), {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          const headers = results.meta.fields || [];
+          const parsed = results.data
+            .map(r => parseRowObject(r, headers))
+            .filter(r => r.scores.some(s => s > 0));
+
+          if (parsed.length > 0) {
+            rawRecords = parsed;
+            populateFilterDropdowns();
+            applyFilters();
+            const nowStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            statusEl.textContent = `เชื่อมต่อฐานข้อมูลสำเร็จ (${rawRecords.length} รายการ • อัปเดต ${nowStr})`;
+          } else {
+            statusEl.textContent = "ไม่พบข้อมูลในชีต";
+          }
+        },
+        error: function() {
+          statusEl.textContent = "ไม่สามารถดึง CSV อัตโนมัติได้ (กรุณาเปิดผ่าน GitHub Pages)";
+        }
+      });
+    }
+
+    function populateFilterDropdowns() {
+      const fillSelect = (id, label, values) => {
+        const select = document.getElementById(id);
+        const current = select.value;
+        const unique = [...new Set(values)].filter(Boolean);
+        select.innerHTML = `<option value="ALL">${label}: ทั้งหมด</option>` +
+          unique.map(v => `<option value="${v}">${v}</option>`).join("");
+        if (unique.includes(current)) select.value = current;
+      };
+
+      fillSelect("filterGender", "เพศ", rawRecords.map(r => r.gender));
+      fillSelect("filterAge", "อายุ", rawRecords.map(r => r.age));
+      fillSelect("filterEdu", "วุฒิการศึกษา", rawRecords.map(r => r.edu));
+      fillSelect("filterRole", "สถานะทางสังคม", rawRecords.map(r => r.role));
+    }
+
+    function resetFilters() {
+      ["filterGender", "filterAge", "filterEdu", "filterRole"].forEach(id => {
+        document.getElementById(id).value = "ALL";
+      });
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const fGender = document.getElementById("filterGender").value;
+      const fAge = document.getElementById("filterAge").value;
+      const fEdu = document.getElementById("filterEdu").value;
+      const fRole = document.getElementById("filterRole").value;
+
+      filteredRecords = rawRecords.filter(r => {
+        if (fGender !== "ALL" && r.gender !== fGender) return false;
+        if (fAge !== "ALL" && r.age !== fAge) return false;
+        if (fEdu !== "ALL" && r.edu !== fEdu) return false;
+        if (fRole !== "ALL" && r.role !== fRole) return false;
+        return true;
+      });
+
+      updateDashboard();
+    }
+
+    function calcStats(arr) {
+      if (!arr.length) return { mean: 0, sd: 0 };
+      const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+      const variance = arr.length > 1
+        ? arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (arr.length - 1)
+        : 0;
+      return { mean, sd: Math.sqrt(variance) };
+    }
+
+    function updateDashboard() {
+      const n = filteredRecords.length;
+      document.getElementById("kpiCount").textContent = n.toLocaleString();
+
+      const lastTs = n > 0 ? filteredRecords[n - 1].timestamp : "-";
+      document.getElementById("kpiLastUpdate").textContent = `ล่าสุด: ${lastTs}`;
+
+      const allScores = filteredRecords.flatMap(r => r.scores.filter(s => s >= 1 && s <= 5));
+      const overall = calcStats(allScores);
+      const pct = (overall.mean / 5) * 100;
+      const level = interpretLevel(overall.mean);
+
+      document.getElementById("kpiMean").textContent = overall.mean.toFixed(2);
+      document.getElementById("kpiSD").textContent = `(S.D. = ${overall.sd.toFixed(2)})`;
+      document.getElementById("kpiPercent").textContent = `${pct.toFixed(2)}%`;
+      document.getElementById("kpiProgressBar").style.width = `${pct.toFixed(1)}%`;
+
+      const badge = document.getElementById("kpiLevelBadge");
+      badge.textContent = n > 0 ? level.label : "-";
+      badge.className = `inline-block px-3 py-1 rounded-xl text-lg font-bold ${n > 0 ? level.badge : "bg-slate-100 text-slate-500"}`;
+
+      renderDemographicCharts();
+      renderEvaluationChartsAndTable();
+      renderComments();
+    }
+
+    function renderChart(id, config) {
+      if (charts[id]) charts[id].destroy();
+      const ctx = document.getElementById(id).getContext("2d");
+      charts[id] = new Chart(ctx, config);
+    }
+
+    function countByField(field) {
+      const counts = {};
+      filteredRecords.forEach(r => {
+        const k = r[field] || "ไม่ระบุ";
+        counts[k] = (counts[k] || 0) + 1;
+      });
+      return counts;
+    }
+
+    function renderDemographicCharts() {
+      const palette = ["#1e3a8a", "#0284c7", "#38bdf8", "#6366f1", "#0d9488", "#f59e0b"];
+
+      const makeDoughnut = (id, dataMap) => {
+        renderChart(id, {
+          type: "doughnut",
+          data: {
+            labels: Object.keys(dataMap),
+            datasets: [{ data: Object.values(dataMap), backgroundColor: palette, borderWidth: 2, borderColor: "#ffffff" }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom", labels: { font: { family: "Sarabun", size: 11 }, boxWidth: 12 } } }
+          }
+        });
+      };
+
+      const makeBar = (id, dataMap) => {
+        renderChart(id, {
+          type: "bar",
+          data: {
+            labels: Object.keys(dataMap),
+            datasets: [{ label: "จำนวน (คน)", data: Object.values(dataMap), backgroundColor: "#1d4ed8", borderRadius: 6 }]
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { beginAtZero: true, ticks: { stepSize: 1, font: { family: "Sarabun", size: 11 } } },
+              y: { ticks: { font: { family: "Sarabun", size: 11 } } }
+            }
+          }
+        });
+      };
+
+      makeDoughnut("chartGender", countByField("gender"));
+      makeBar("chartAge", countByField("age"));
+      makeBar("chartEdu", countByField("edu"));
+      makeDoughnut("chartRole", countByField("role"));
+    }
+
+    function renderEvaluationChartsAndTable() {
+      const tbody = document.getElementById("statsTableBody");
+      const tfoot = document.getElementById("statsTableFoot");
+      tbody.innerHTML = "";
+
+      const itemMeans = [];
+      const stackData = { 5: [], 4: [], 3: [], 2: [], 1: [] };
+      const totalCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+      QUESTIONS.forEach((qText, idx) => {
+        const qScores = filteredRecords.map(r => r.scores[idx]).filter(s => s >= 1 && s <= 5);
+        const c = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        qScores.forEach(s => { c[s]++; totalCounts[s]++; });
+
+        const st = calcStats(qScores);
+        const pct = (st.mean / 5) * 100;
+        const lvl = interpretLevel(st.mean);
+        itemMeans.push(Number(st.mean.toFixed(2)));
+
+        const n = qScores.length || 1;
+        [5, 4, 3, 2, 1].forEach(score => {
+          stackData[score].push(Number(((c[score] / n) * 100).toFixed(1)));
+        });
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-blue-50/40 transition">
+            <td class="py-3 px-4 text-slate-700 font-medium">${qText}</td>
+            <td class="py-3 px-2 text-center">${c[5]}</td>
+            <td class="py-3 px-2 text-center">${c[4]}</td>
+            <td class="py-3 px-2 text-center">${c[3]}</td>
+            <td class="py-3 px-2 text-center">${c[2]}</td>
+            <td class="py-3 px-2 text-center">${c[1]}</td>
+            <td class="py-3 px-3 text-center font-bold text-blue-900 bg-blue-50/40">${st.mean.toFixed(2)}</td>
+            <td class="py-3 px-3 text-center text-slate-600 bg-blue-50/40">${st.sd.toFixed(2)}</td>
+            <td class="py-3 px-3 text-center font-semibold text-indigo-800 bg-blue-50/40">${pct.toFixed(2)}%</td>
+            <td class="py-3 px-3 text-center bg-blue-50/40">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${qScores.length ? lvl.badge : 'bg-slate-100 text-slate-400'}">
+                ${qScores.length ? lvl.label : '-'}
+              </span>
+            </td>
+          </tr>
+        `;
+      });
+
+      const allScores = filteredRecords.flatMap(r => r.scores.filter(s => s >= 1 && s <= 5));
+      const allStat = calcStats(allScores);
+      const allPct = (allStat.mean / 5) * 100;
+      const allLvl = interpretLevel(allStat.mean);
+
+      tfoot.innerHTML = `
+        <tr>
+          <td class="py-3 px-4">รวมเฉลี่ยทั้ง 6 ประเด็น</td>
+          <td class="py-3 px-2 text-center">${totalCounts[5]}</td>
+          <td class="py-3 px-2 text-center">${totalCounts[4]}</td>
+          <td class="py-3 px-2 text-center">${totalCounts[3]}</td>
+          <td class="py-3 px-2 text-center">${totalCounts[2]}</td>
+          <td class="py-3 px-2 text-center">${totalCounts[1]}</td>
+          <td class="py-3 px-3 text-center">${allStat.mean.toFixed(2)}</td>
+          <td class="py-3 px-3 text-center">${allStat.sd.toFixed(2)}</td>
+          <td class="py-3 px-3 text-center">${allPct.toFixed(2)}%</td>
+          <td class="py-3 px-3 text-center">${allScores.length ? allLvl.label : '-'}</td>
+        </tr>
+      `;
+
+      renderChart("chartItemMean", {
+        type: "bar",
+        data: {
+          labels: ["ข้อ 1", "ข้อ 2", "ข้อ 3", "ข้อ 4", "ข้อ 5", "ข้อ 6"],
+          datasets: [{
+            label: "คะแนนเฉลี่ย",
+            data: itemMeans,
+            backgroundColor: ["#1e3a8a", "#1d4ed8", "#0284c7", "#0ea5e9", "#2563eb", "#3b82f6"],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { min: 0, max: 5, ticks: { stepSize: 1, font: { family: "Sarabun" } } },
+            x: { ticks: { font: { family: "Sarabun", weight: "bold" } } }
+          }
+        }
+      });
+
+      renderChart("chartItemStack", {
+        type: "bar",
+        data: {
+          labels: ["ข้อ 1", "ข้อ 2", "ข้อ 3", "ข้อ 4", "ข้อ 5", "ข้อ 6"],
+          datasets: [
+            { label: "มากที่สุด (5)", data: stackData[5], backgroundColor: "#0f294a" },
+            { label: "มาก (4)", data: stackData[4], backgroundColor: "#0284c7" },
+            { label: "ปานกลาง (3)", data: stackData[3], backgroundColor: "#7dd3fc" },
+            { label: "น้อย (2)", data: stackData[2], backgroundColor: "#fbbf24" },
+            { label: "น้อยที่สุด (1)", data: stackData[1], backgroundColor: "#f87171" }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { stacked: true, ticks: { font: { family: "Sarabun", weight: "bold" } } },
+            y: { stacked: true, min: 0, max: 100, ticks: { callback: v => v + "%", font: { family: "Sarabun" } } }
+          },
+          plugins: { legend: { position: "bottom", labels: { font: { family: "Sarabun", size: 11 }, boxWidth: 12 } } }
+        }
+      });
+    }
+
+    function escapeHTML(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderComments() {
+      const keyword = document.getElementById("commentSearch").value.trim().toLowerCase();
+      const container = document.getElementById("commentsContainer");
+
+      const withComments = filteredRecords.filter(r => {
+        if (!r.comment || r.comment === "-" || r.comment === "ไม่มี") return false;
+        if (keyword && !r.comment.toLowerCase().includes(keyword)) return false;
+        return true;
+      });
+
+      document.getElementById("commentCountBadge").textContent = `${withComments.length} รายการ`;
+
+      if (withComments.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            ไม่พบความคิดเห็นและข้อเสนอแนะเพิ่มเติมในเงื่อนไขที่เลือก
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = withComments.map((r, i) => {
+        // แปลงการขึ้นบรรทัดใหม่ใน Google Sheets ให้แสดงผลเป็นบรรทัดแยกชัดเจน
+        const formattedText = escapeHTML(r.comment).replace(/\r?\n/g, "<br>");
+        return `
+          <div class="rounded-2xl border border-sky-200/80 bg-gradient-to-r from-sky-50/50 to-white p-4 sm:p-5 shadow-sm hover:shadow transition">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100/80 text-blue-900 text-xs font-bold">
+                #${i + 1} • ${escapeHTML(r.role)}
+              </span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
+                ★ ${r.avg.toFixed(2)} / 5.00
+              </span>
+            </div>
+            <div class="text-slate-800 text-sm sm:text-base leading-relaxed font-medium pl-1">
+              ${formattedText}
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-slate-100 text-xs text-slate-400">
+              <span>${escapeHTML(r.gender)} • ${escapeHTML(r.age)} • ${escapeHTML(r.edu)}</span>
+              <span>${escapeHTML(r.timestamp)}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function copyAllComments() {
+      const comments = filteredRecords
+        .filter(r => r.comment && r.comment !== "-" && r.comment !== "ไม่มี")
+        .map((r, i) => `${i + 1}. [${r.role}]\n${r.comment}`);
+      if (!comments.length) return alert("ไม่มีข้อความข้อเสนอแนะให้คัดลอก");
+      navigator.clipboard.writeText(comments.join("\n\n")).then(() => {
+        alert(`คัดลอกข้อเสนอแนะทั้งหมด ${comments.length} รายการเรียบร้อยแล้ว`);
+      });
+    }
+
+    function downloadHTML() {
+      const blob = new Blob([document.documentElement.outerHTML], { type: "text/html;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "dashboard.html";
+      a.click();
+    }
+
+    // เริ่มต้นดึงข้อมูล และตั้งรีเฟรชอัตโนมัติทุก 60 วินาที
+    fetchSheetData();
+    setInterval(() => fetchSheetData(false), 60000);
+  </script>
+</body>
+</html>
