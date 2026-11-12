@@ -284,48 +284,42 @@
       return { label: "น้อยที่สุด", badge: "bg-rose-100 text-rose-800" };
     }
 
-    // ค้นหาคอลัมน์อย่างแม่นยำ (รองรับทั้งชื่อหัวตารางและตำแหน่งคอลัมน์ A-P)
-    function parseRowObject(row, headers) {
-      const getByKeyword = (keywords, fallbackIndex) => {
-        for (const h of headers) {
-          const cleanH = h.replace(/\s+/g, ' ').trim();
-          if (keywords.every(kw => cleanH.includes(kw))) {
-            return (row[h] ?? "").toString().trim();
-          }
-        }
-        if (fallbackIndex !== undefined && headers[fallbackIndex]) {
-          return (row[headers[fallbackIndex]] ?? "").toString().trim();
-        }
-        return "";
-      };
+    // อ่านข้อมูลแบบ Array ของแต่ละแถว เพื่อล็อกตำแหน่งคอลัมน์ A ถึง P อย่างแม่นยำ 100%
+    function parseArrayRow(cols) {
+      const clean = (idx) => (cols[idx] !== undefined && cols[idx] !== null) ? String(cols[idx]).trim() : "";
 
-      // โครงสร้างคอลัมน์ตามชีตจริง:
-      // A(0): ประทับเวลา | B(1): เพศ | C(2): อายุ | D(3): วุฒิ | E(4): สถานะ | F(5): ระบุอื่นๆ
-      // G(6)-L(11): ข้อ 1 - ข้อ 6 | M(12): เฉลี่ย | N(13): ร้อยละ | O(14): ระดับ | P(15): ส่วนที่ 3 ความคิดเห็นฯ
-      const timestamp = getByKeyword(["เวลา"], 0);
-      const gender = getByKeyword(["เพศ"], 1) || "ไม่ระบุ";
-      const age = getByKeyword(["อายุ"], 2) || "ไม่ระบุ";
-      const edu = getByKeyword(["วุฒิ"], 3) || "ไม่ระบุ";
-      const role = getByKeyword(["สถานะ"], 4) || "ไม่ระบุ";
-
+      // โครงสร้างคอลัมน์ในชีต "ผลการประเมิน_วันที่สาม":
+      // [0] A: ประทับเวลา | [1] B: เพศ | [2] C: อายุ | [3] D: วุฒิ | [4] E: สถานะ | [5] F: ระบุอื่นๆ
+      // [6] G: ข้อ 1 | [7] H: ข้อ 2 | [8] I: ข้อ 3 | [9] J: ข้อ 4 | [10] K: ข้อ 5 | [11] L: ข้อ 6
+      // [12] M: คะแนนเฉลี่ย | [13] N: ร้อยละ | [14] O: ระดับความพึงพอใจ | [15] P: ส่วนที่ 3 ความคิดเห็นและข้อเสนอแนะเพิ่มเติม
       const scores = [
-        parseFloat(getByKeyword(["ข้อ 1"], 6)) || 0,
-        parseFloat(getByKeyword(["ข้อ 2"], 7)) || 0,
-        parseFloat(getByKeyword(["ข้อ 3"], 8)) || 0,
-        parseFloat(getByKeyword(["ข้อ 4"], 9)) || 0,
-        parseFloat(getByKeyword(["ข้อ 5"], 10)) || 0,
-        parseFloat(getByKeyword(["ข้อ 6"], 11)) || 0
+        parseFloat(clean(6)) || 0,
+        parseFloat(clean(7)) || 0,
+        parseFloat(clean(8)) || 0,
+        parseFloat(clean(9)) || 0,
+        parseFloat(clean(10)) || 0,
+        parseFloat(clean(11)) || 0
       ];
 
-      // ดึงความคิดเห็นจากคอลัมน์ที่มีคำว่า "ความคิดเห็น" หรือ "ข้อเสนอแนะ" หรือคอลัมน์สุดท้าย (Index 15 / คอลัมน์ P)
-      let comment = "";
-      const commentHeader = headers.find(h => h.includes("ความคิดเห็น") || h.includes("ข้อเสนอแนะ"));
-      if (commentHeader) {
-        comment = (row[commentHeader] ?? "").toString().trim();
-      } else if (headers.length >= 16) {
-        comment = (row[headers[15]] ?? "").toString().trim();
-      } else {
-        comment = (row[headers[headers.length - 1]] ?? "").toString().trim();
+      // ข้ามแถวหัวตาราง (แถวที่ไม่มีคะแนนตัวเลข 1-5)
+      if (!scores.some(s => s >= 1 && s <= 5)) return null;
+
+      const timestamp = clean(0);
+      const gender = clean(1) || "ไม่ระบุ";
+      const age = clean(2) || "ไม่ระบุ";
+      const edu = clean(3) || "ไม่ระบุ";
+      const role = clean(4) || "ไม่ระบุ";
+
+      // ดึงข้อความความคิดเห็นจากคอลัมน์ P (Index 15) หรือคอลัมน์ตั้งแต่ Index 15 เป็นต้นไปที่ไม่ใช่ตัวเลขคะแนน
+      let comment = clean(15);
+      if (!comment || /^[1-5](\.0+)?$/.test(comment)) {
+        for (let i = cols.length - 1; i >= 15; i--) {
+          const val = clean(i);
+          if (val && !/^[0-9.]+$/.test(val) && !["มากที่สุด", "มาก", "ปานกลาง", "น้อย", "น้อยที่สุด"].includes(val)) {
+            comment = val;
+            break;
+          }
+        }
       }
 
       const validScores = scores.filter(s => s >= 1 && s <= 5);
@@ -340,13 +334,12 @@
 
       Papa.parse(CSV_URL + "&_t=" + Date.now(), {
         download: true,
-        header: true,
+        header: false,
         skipEmptyLines: true,
         complete: function(results) {
-          const headers = results.meta.fields || [];
-          const parsed = results.data
-            .map(r => parseRowObject(r, headers))
-            .filter(r => r.scores.some(s => s > 0));
+          const parsed = (results.data || [])
+            .map(row => parseArrayRow(row))
+            .filter(item => item !== null);
 
           if (parsed.length > 0) {
             rawRecords = parsed;
@@ -359,7 +352,7 @@
           }
         },
         error: function() {
-          statusEl.textContent = "ไม่สามารถดึง CSV อัตโนมัติได้ (กรุณาเปิดผ่าน GitHub Pages)";
+          statusEl.textContent = "ไม่สามารถดึง CSV อัตโนมัติได้";
         }
       });
     }
@@ -621,7 +614,7 @@
       const container = document.getElementById("commentsContainer");
 
       const withComments = filteredRecords.filter(r => {
-        if (!r.comment || r.comment === "-" || r.comment === "ไม่มี") return false;
+        if (!r.comment || r.comment === "-" || r.comment === "ไม่มี" || /^[1-5](\.0+)?$/.test(r.comment)) return false;
         if (keyword && !r.comment.toLowerCase().includes(keyword)) return false;
         return true;
       });
@@ -638,7 +631,6 @@
       }
 
       container.innerHTML = withComments.map((r, i) => {
-        // แปลงการขึ้นบรรทัดใหม่ใน Google Sheets ให้แสดงผลเป็นบรรทัดแยกชัดเจน
         const formattedText = escapeHTML(r.comment).replace(/\r?\n/g, "<br>");
         return `
           <div class="rounded-2xl border border-sky-200/80 bg-gradient-to-r from-sky-50/50 to-white p-4 sm:p-5 shadow-sm hover:shadow transition">
@@ -664,7 +656,7 @@
 
     function copyAllComments() {
       const comments = filteredRecords
-        .filter(r => r.comment && r.comment !== "-" && r.comment !== "ไม่มี")
+        .filter(r => r.comment && r.comment !== "-" && r.comment !== "ไม่มี" && !/^[1-5](\.0+)?$/.test(r.comment))
         .map((r, i) => `${i + 1}. [${r.role}]\n${r.comment}`);
       if (!comments.length) return alert("ไม่มีข้อความข้อเสนอแนะให้คัดลอก");
       navigator.clipboard.writeText(comments.join("\n\n")).then(() => {
@@ -676,11 +668,10 @@
       const blob = new Blob([document.documentElement.outerHTML], { type: "text/html;charset=utf-8" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "dashboard.html";
+      a.download = "index.html";
       a.click();
     }
 
-    // เริ่มต้นดึงข้อมูล และตั้งรีเฟรชอัตโนมัติทุก 60 วินาที
     fetchSheetData();
     setInterval(() => fetchSheetData(false), 60000);
   </script>
